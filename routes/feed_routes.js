@@ -6,7 +6,13 @@ const feedController = require("../controllers/feed_controller");
 const router = express.Router();
 
 // GET /feed/posts
+router.get("/post/:pid", feedController.getPostById);
+
+// GET /feed/posts
 router.get("/posts", feedController.getPosts);
+
+//GET /feed/posts/:uid
+router.get("/user/:uid", feedController.getPostsByUserId);
 
 // POST /feed/posts
 router.post(

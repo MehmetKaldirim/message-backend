@@ -1,12 +1,12 @@
 const { validationResult } = require("express-validator");
-
+const HttpError = require("../models/http-error");
 const Post = require("../models/post");
 
-exports.getPosts = async (req, res, next) => {
+exports.getPostById = async (req, res, next) => {
   const postId = req.params.pid; // { pid: 'p1' }
   let post;
   try {
-    post = await Post.findById(placeId);
+    post = await Post.findById(postId);
   } catch (err) {
     const error = new HttpError(
       "Something went wrong, could not find post.",
@@ -24,6 +24,26 @@ exports.getPosts = async (req, res, next) => {
   }
 
   res.json({ post: post.toObject({ getters: true }) }); // => { place } => { place: place }
+};
+
+exports.getPosts = async (req, res, next) => {
+  let posts;
+  try {
+    posts = await Post.find();
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching posts failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+  if (!posts || posts.length === 0) {
+    return next(new HttpError("Could not find any posts.", 404));
+  }
+
+  res.json({
+    posts: posts.map((place) => place.toObject({ getters: true })),
+  });
 };
 
 exports.getPostsByUserId = async (req, res, next) => {
@@ -75,28 +95,4 @@ exports.createPost = async (req, res, next) => {
   }
 
   res.status(201).json({ post: createdPost });
-};
-
-exports.createPosta = (req, res, next) => {
-  const errors = expValidator.validationResult(req);
-  if (!errors.isEmpty()) {
-    console.log(errors);
-    next(new HttpError("Invalid inputs passed, please check your data", 422));
-  }
-  //const title = req.body.title;
-  //const content = req.body.content;
-
-  const { title, content } = req.body;
-  // Create post in db
-
-  res.status(201).json({
-    message: "Post created successfully!",
-    post: {
-      _id: new Date().toISOString(),
-      title: title,
-      content: content,
-      creator: { name: "Math" },
-      createdAt: new Date(),
-    },
-  });
 };
