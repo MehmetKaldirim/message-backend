@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const feedRoutes = require("./routes/feed_routes");
+const userRoutes = require("./routes/user_routes");
+
 const HttpError = require("./models/http-error");
 
 const app = express();
@@ -27,6 +29,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/feed", feedRoutes);
+app.use("/feed", userRoutes);
 
 app.use((error, req, res, next) => {
   if (res.headerSent) {
