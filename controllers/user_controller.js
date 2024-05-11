@@ -70,14 +70,14 @@ const signup = async (req, res, next) => {
   const createdUser = new User({
     name, // name: name
     email,
-    image: "https://avatars.githubusercontent.com/u/45769545?s=96&v=4",
+    imageUrl: "https://avatars.githubusercontent.com/u/45769545?s=96&v=4",
     password,
     posts,
   });
 
   try {
     await createdUser.save();
-  } catch (er) {
+  } catch (err) {
     const error = new HttpError("Creating user failed, please try again");
     return next(error);
   }
@@ -88,16 +88,29 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const identifiedUser = await User.findOne({ email: email });
-
-  if (!identifiedUser || identifiedUser.password !== password) {
-    throw new HttpError(
-      "Could not identify user, credentials seem to be wrong.",
-      401
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError(
+      "Logging in up failed, please try again later",
+      500
     );
+    return next(error);
   }
 
-  res.json({ message: "Logged in!" });
+  if (!existingUser || existingUser.password !== password) {
+    const error = new HttpError(
+      "Invalid credentials, could not log you in.",
+      401
+    );
+    return next(error);
+  }
+
+  res.json({
+    message: "Logged in!",
+    user: existingUser.toObject({ getters: true }),
+  });
 };
 
 exports.getUsers = getUsers;

@@ -1,6 +1,9 @@
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
+
 const HttpError = require("../models/http-error");
 const Post = require("../models/post");
+const User = require("../models/user");
 
 exports.getPostById = async (req, res, next) => {
   const postId = req.params.pid; // { pid: 'p1' }
@@ -75,24 +78,81 @@ exports.createPost = async (req, res, next) => {
     console.log(errors);
     next(new HttpError("Invalid inputs passed, please check your data", 422));
   }
-  const { title, content } = req.body;
+  const { title, content, creator } = req.body;
 
   // const title = req.body.title;
+
   const createdPost = new Post({
-    title,
-    content,
-    creator: { name: "Math" },
+    title: title,
+    content: content,
     imageUrl: "https://avatars.githubusercontent.com/u/45769545?v=4",
-    createdAt: new Date(),
+    creator: creator,
   });
 
+  console.log("bu ne " + creator);
+  let user;
   try {
-    await createdPost.save();
+    user = await User.findById(creator);
   } catch (err) {
-    console.log(err);
-    const error = new HttpError("Creating post failed, please try again", 500);
+    const error = new HttpError("Creating place failed, please try again", 500);
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError("Could not find user for provided id", 404);
+    return next(error);
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdPost.save({ session: sess });
+    user.posts.push(createdPost);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (err) {
+    //console.log("err = " + err);
+    const error = new HttpError("Creating post failed, please try again.", 500);
     return next(error);
   }
 
   res.status(201).json({ post: createdPost });
+};
+
+exports.updatePost = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid inputs passed, please check your data.", 422)
+    );
+  }
+
+  const { title, content } = req.body;
+  const postId = req.params.pid;
+
+  let post;
+  try {
+    post = await Post.findById(postId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find post with this id.",
+      500
+    );
+    return next(error);
+  }
+
+  post.title = title;
+  post.content = content;
+
+  try {
+    await post.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not save the updated place.",
+      500
+    );
+    return next(error);
+  }
+
+  res.status(200).json({ post: post.toObject({ getters: true }) });
 };

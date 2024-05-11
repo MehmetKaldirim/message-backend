@@ -28,8 +28,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/feed", feedRoutes);
-app.use("/feed", userRoutes);
+app.use("/api/feeds", feedRoutes);
+app.use("/api/users", userRoutes);
 
 app.use((error, req, res, next) => {
   if (res.headerSent) {

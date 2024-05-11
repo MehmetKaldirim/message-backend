@@ -5,16 +5,16 @@ const feedController = require("../controllers/feed_controller");
 
 const router = express.Router();
 
-// GET /feed/posts
+// GET /feeds/posts
 router.get("/post/:pid", feedController.getPostById);
 
-// GET /feed/posts
+// GET /feeds/posts
 router.get("/posts", feedController.getPosts);
 
-//GET /feed/posts/:uid
+//GET /feeds/posts/:uid
 router.get("/user/:uid", feedController.getPostsByUserId);
 
-// POST /feed/posts
+// POST api/feeds/post
 router.post(
   "/post",
   [
@@ -23,5 +23,16 @@ router.post(
   ],
   feedController.createPost
 );
+
+router.patch(
+  "/:pid",
+  [
+    expValidator.check("title").not().isEmpty(),
+    expValidator.check("content").isLength({ min: 5 }),
+  ],
+  feedController.updatePost
+);
+
+//router.delete("/:pid", feedController.deletePlace);
 
 module.exports = router;
