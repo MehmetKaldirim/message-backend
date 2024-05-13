@@ -33,6 +33,6 @@ router.patch(
   feedController.updatePost
 );
 
-//router.delete("/:pid", feedController.deletePlace);
+router.delete("/:pid", feedController.deletePost);
 
 module.exports = router;

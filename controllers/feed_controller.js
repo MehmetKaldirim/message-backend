@@ -61,11 +61,11 @@ exports.getPostsByUserId = async (req, res, next) => {
     );
     return next(error);
   }
-  if (!posts || posts.length === 0) {
-    return next(
-      new HttpError("Could not find  posts for the provided user id.", 404)
-    );
-  }
+  // if (!posts || posts.length === 0) {
+  //   return next(
+  //     new HttpError("Could not find  posts for the provided user id.", 404)
+  //   );
+  // }
 
   res.json({
     posts: posts.map((place) => place.toObject({ getters: true })),
@@ -155,4 +155,43 @@ exports.updatePost = async (req, res, next) => {
   }
 
   res.status(200).json({ post: post.toObject({ getters: true }) });
+};
+
+exports.deletePost = async (req, res, next) => {
+  const postId = req.params.pid;
+
+  let post;
+  try {
+    post = await Post.findById(postId).populate("creator");
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not post with this id.",
+      500
+    );
+    return next(error);
+  }
+
+  if (!post) {
+    const error = new HttpError("Could not find post for this id.", 404);
+    return next(error);
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await post.deleteOne({ session: sess });
+    //await Place.findByIdAndDelete(placeId);
+    post.creator.posts.pull(post);
+    await post.creator.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not delete place.",
+      500
+    );
+    console.log(err);
+    return next(error);
+  }
+
+  res.status(200).json({ message: "Deleted place." });
 };
