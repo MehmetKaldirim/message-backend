@@ -1,23 +1,9 @@
+const fs = require("fs");
 const uuid = require("uuid");
 const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
-
-const DUMMY_USERS = [
-  {
-    id: "u1",
-    name: "Max Schwarz",
-    email: "test@test.com",
-    password: "testers",
-  },
-  {
-    id: "u2",
-    name: "Math Schwarz",
-    email: "test1@test.com",
-    password: "testers",
-  },
-];
 
 const getUsers = async (req, res, next) => {
   let users;
@@ -91,10 +77,11 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
+  //"https://avatars.githubusercontent.com/u/45769545?s=96&v=4",
   const createdUser = new User({
     name, // name: name
     email,
-    imageUrl: "https://avatars.githubusercontent.com/u/45769545?s=96&v=4",
+    imageUrl: req.file.path,
     password,
     posts,
   });

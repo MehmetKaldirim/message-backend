@@ -3,6 +3,8 @@ const expValidator = require("express-validator");
 
 const feedController = require("../controllers/feed_controller");
 
+const fileUpload = require("../middleware/file-upload");
+
 const router = express.Router();
 
 // GET /feeds/posts
@@ -17,6 +19,7 @@ router.get("/user/:uid", feedController.getPostsByUserId);
 // POST api/feeds/post
 router.post(
   "/post",
+  fileUpload.single("image"),
   [
     expValidator.body("title").trim().isLength({ min: 7 }),
     expValidator.body("content").trim().isLength({ min: 5 }),

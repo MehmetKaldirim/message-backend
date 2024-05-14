@@ -1,3 +1,4 @@
+const fs = require("fs");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 
@@ -81,15 +82,15 @@ exports.createPost = async (req, res, next) => {
   const { title, content, creator } = req.body;
 
   // const title = req.body.title;
+  // "https://avatars.githubusercontent.com/u/45769545?v=4",
 
   const createdPost = new Post({
     title: title,
     content: content,
-    imageUrl: "https://avatars.githubusercontent.com/u/45769545?v=4",
+    imageUrl: req.file.path,
     creator: creator,
   });
 
-  console.log("bu ne " + creator);
   let user;
   try {
     user = await User.findById(creator);
@@ -148,7 +149,7 @@ exports.updatePost = async (req, res, next) => {
     await post.save();
   } catch (err) {
     const error = new HttpError(
-      "Something went wrong, could not save the updated place.",
+      "Something went wrong, could not save the updated post.",
       500
     );
     return next(error);
