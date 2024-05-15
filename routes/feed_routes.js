@@ -5,6 +5,8 @@ const feedController = require("../controllers/feed_controller");
 
 const fileUpload = require("../middleware/file-upload");
 
+const checkAuth = require("../middleware/check-auth");
+
 const router = express.Router();
 
 // GET /feeds/posts
@@ -15,6 +17,8 @@ router.get("/posts", feedController.getPosts);
 
 //GET /feeds/posts/:uid
 router.get("/user/:uid", feedController.getPostsByUserId);
+
+router.use(checkAuth);
 
 // POST api/feeds/post
 router.post(

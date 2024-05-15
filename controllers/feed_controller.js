@@ -79,7 +79,7 @@ exports.createPost = async (req, res, next) => {
     console.log(errors);
     next(new HttpError("Invalid inputs passed, please check your data", 422));
   }
-  const { title, content, creator } = req.body;
+  const { title, content } = req.body;
 
   // const title = req.body.title;
   // "https://avatars.githubusercontent.com/u/45769545?v=4",
@@ -88,12 +88,12 @@ exports.createPost = async (req, res, next) => {
     title: title,
     content: content,
     imageUrl: req.file.path,
-    creator: creator,
+    creator: req.userData.userId,
   });
 
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError("Creating place failed, please try again", 500);
     return next(error);
@@ -142,6 +142,11 @@ exports.updatePost = async (req, res, next) => {
     return next(error);
   }
 
+  if (post.creator.toString() !== req.userData.userId) {
+    const error = new HttpError("You are not allowed to edit this post.", 401);
+    return next(error);
+  }
+
   post.title = title;
   post.content = content;
 
@@ -176,6 +181,15 @@ exports.deletePost = async (req, res, next) => {
     const error = new HttpError("Could not find post for this id.", 404);
     return next(error);
   }
+  if (post.creator.id !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to delete this post.",
+      401
+    );
+    return next(error);
+  }
+
+  const imagePath = post.imageUrl;
 
   try {
     const sess = await mongoose.startSession();
@@ -193,6 +207,10 @@ exports.deletePost = async (req, res, next) => {
     console.log(err);
     return next(error);
   }
+
+  fs.unlink(imagePath, (err) => {
+    console.log(err);
+  });
 
   res.status(200).json({ message: "Deleted place." });
 };
